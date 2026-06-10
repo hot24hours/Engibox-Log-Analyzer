@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AVMAP EngiBox Analyst (v11.0 Pro)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- D3.js v7 -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans:wght@300;400;500;700&family=Roboto+Mono:wght@400;500;700&family=Teko:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- Modern UI CSS Variables --- */
+        :root {
+            /* Theme: Pro Dark (Slate/Navy based) */
+            --bg-body: #0f172a; /* Slate 900 */
+            --bg-sidebar: #1e293b; /* Slate 800 */
+            --bg-panel: #1e293b;
+            --bg-input: #0f172a;
+            
+            --text-main: #f8fafc;
+            --text-highlight: #38bdf8; /* Light Blue */
+            --text-muted: #94a3b8;
+            --text-label: #38bdf8;
+            
+            --border-color: #334155;
+            --grid-line: #1e293b;
+            --accent-color: #0ea5e9;
+            
+            --danger-color: #ef4444;
+            --danger-glow: rgba(239, 68, 68, 0.4);
+            
+            --chart-bg: #0f172a;
+            --chart-header-bg: #1e293b;
+            
+            /* Glassmorphism Background for Top Panel */
+            --hud-bg: rgba(30, 41, 59, 0.75);
+            
+            --tooltip-bg: rgba(15, 23, 42, 0.95);
+            --tooltip-text: #f8fafc;
+            --tooltip-border: #334155;
+        }
+
+        [data-theme="light"] {
+            /* Theme: Engineering Light */
+            --bg-body: #f1f5f9; /* Slate 100 */
+            --bg-sidebar: #ffffff; /* Pure White */
+            --bg-panel: #ffffff;
+            --bg-input: #f8fafc;
+            
+            --text-main: #0f172a;
+            --text-highlight: #0284c7;
+            --text-muted: #64748b;
+            --text-label: #475569;
+            
+            --border-color: #e2e8f0;
+            --grid-line: #cbd5e1;
+            --accent-color: #0284c7;
+            
+            --danger-color: #dc2626;
+            --danger-glow: rgba(220, 38, 38, 0.2);
+            
+            --chart-bg: #ffffff;
+            --chart-header-bg: #f8fafc;
+            
+            --hud-bg: rgba(255, 255, 255, 0.85);
+            
+            --tooltip-bg: rgba(255, 255, 255, 0.98);
+            --tooltip-text: #1e293b;
+            --tooltip-border: #cbd5e1;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: 'Noto Sans', sans-serif;
+            overflow-x: hidden;
+            transition: background-color 0.4s ease, color 0.4s ease;
+        }
+        
+        .font-mono { font-family: 'Roboto Mono', monospace; }
+        .font-tech { font-family: 'Teko', sans-serif; letter-spacing: 0.08em; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-body); }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+        /* Modern Chart Containers */
+        .chart-container {
+            background-color: var(--chart-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px; /* Rounded corners */
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); /* Soft shadow */
+            transition: all 0.3s ease;
+        }
+        [data-theme="light"] .chart-container {
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+        .chart-header {
+            background-color: var(--chart-header-bg);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        /* D3 Elements */
+        .axis line, .axis path { stroke: var(--border-color); }
+        .axis text { font-size: 11px; font-family: 'Roboto Mono', monospace; font-weight: 500; }
+        .grid-line { stroke: var(--grid-line); stroke-opacity: 0.8; stroke-dasharray: 2 2; pointer-events: none; }
+        .crosshair-line { stroke: var(--text-highlight); stroke-width: 1px; stroke-dasharray: 4 4; opacity: 0; pointer-events: none; }
+        .overlay { fill: none; pointer-events: all; cursor: crosshair; }
+        .anomaly-highlight { fill: var(--danger-color); fill-opacity: 0.1; pointer-events: none; }
+        
+        /* Max Card - Interactive */
+        .max-card {
+            background: var(--bg-panel);
+            padding: 8px 16px;
+            position: relative;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 16px;
+            min-width: 150px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .max-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--accent-color);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .max-card-icon {
+            color: var(--text-muted);
+            transition: color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .max-card-label {
+            font-family: 'Teko', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--text-label);
+            line-height: 1;
+            text-transform: uppercase;
+        }
+
+        .max-card-value {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-main);
+            line-height: 1.1;
+            margin-top: 2px;
+        }
+
+        /* Alert Animation - Soft Glow */
+        @keyframes soft-pulse-border {
+            0% { box-shadow: 0 0 0 0 var(--danger-glow); border-color: var(--danger-color); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); border-color: var(--danger-color); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); border-color: var(--border-color); }
+        }
+
+        .alert-active {
+            animation: soft-pulse-border 2s infinite;
+        }
+        
+        .alert-active .max-card-icon,
+        .alert-active .max-card-label,
+        .alert-active .max-card-value {
+            color: var(--danger-color) !important;
+        }
+        
+        /* Interactive Elements */
+        .legend-item { 
+            cursor: pointer; 
+            user-select: none; 
+            transition: opacity 0.2s, transform 0.2s;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .legend-item:hover {
+            background: rgba(128, 128, 128, 0.1);
+        }
+
+        /* Micro Chart */
+        .micro-chart-container {
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--danger-color);
+            padding: 12px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            position: relative;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .sparkline-path { fill: none; stroke: var(--danger-color); stroke-width: 2px; pointer-events: none; }
+        .sparkline-area { fill: var(--danger-color); fill-opacity: 0.15; pointer-events: none; }
+        .micro-overlay { fill: none; pointer-events: all; cursor: crosshair; }
+        .micro-hover-dot { fill: var(--text-highlight); stroke: #fff; stroke-width: 2px; pointer-events: none; opacity: 0; }
+
+        /* Tooltip */
+        .micro-tooltip {
+            position: absolute;
+            background: var(--tooltip-bg);
+            color: var(--tooltip-text);
+            padding: 8px 12px;
+            border: 1px solid var(--tooltip-border);
+            border-radius: 8px;
+            font-size: 12px;
+            font-family: 'Roboto Mono', monospace;
+            pointer-events: none;
+            white-space: nowrap;
+            z-index: 50;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            display: none;
+        }
+
+        /* Buttons */
+        .btn-theme {
+            background-color: var(--bg-input);
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+        .btn-theme:hover {
+            color: var(--text-main);
+            border-color: var(--text-muted);
+        }
+        .btn-theme.active {
+            background-color: var(--accent-color);
+            color: #fff;
+            border-color: var(--accent-color);
+            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+            font-weight: 700;
+        }
+
+        /* Primary Button */
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-color), #0284c7);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-weight: bold;
+            letter-spacing: 0.05em;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(14, 165, 233, 0.4);
+        }
+
+        /* Input styling */
+        .hud-input-wrapper {
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .hud-input-wrapper:hover {
+            border-color: var(--accent-color);
+        }
+
+        /* Exported State Logic */
+        .is-exported .hide-on-export {
+            display: none !important;
+        }
+        
+        .glass-panel {
+            background-color: var(--hud-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+    </style>
+</head>
+<body class="h-screen flex flex-col md:flex-row overflow-hidden relative">
+
+    <!-- Mobile Header -->
+    <div class="md:hidden flex items-center justify-between p-4 border-b z-40 relative glass-panel" style="border-color: var(--border-color);">
+        <h1 class="text-xl font-tech font-bold tracking-wider" style="color: var(--text-main);">ENGIBOX <span style="color: var(--accent-color);">PRO</span></h1>
+        <button id="mobileMenuBtn" class="text-gray-400 hover:text-white p-2 cursor-pointer transition-colors">
+            <i data-lucide="menu"></i>
+        </button>
+    </div>
+
+    <!-- Sidebar Overlay (Mobile) -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/80 z-40 hidden md:hidden backdrop-blur-sm cursor-pointer transition-opacity" onclick="toggleMobileMenu()"></div>
+
+    <!-- Sidebar -->
+    <aside id="mainSidebar" class="fixed md:relative w-72 md:w-80 flex-shrink-0 flex flex-col h-full z-50 border-r transition-transform duration-300 ease-in-out transform -translate-x-full md:translate-x-0 shadow-2xl md:shadow-none" style="background-color: var(--bg-sidebar); border-color: var(--border-color);">
+        <!-- Header (Desktop) -->
+        <div class="p-6 border-b hidden md:block" style="border-color: var(--border-color);">
+            <h1 class="text-3xl font-tech font-bold tracking-wider flex items-center gap-3" style="color: var(--text-main);">
+                <i data-lucide="plane" class="w-7 h-7" style="color: var(--accent-color);"></i>
+                ENGIBOX <span style="color: var(--accent-color);">PRO</span>
+            </h1>
+            <p class="text-[10px] tracking-[0.2em] mt-1 pl-10 font-bold" style="color: var(--text-label);">V11.0 ANALYTICS SUITE</p>
+        </div>
+
+        <!-- Mobile Menu Close Button -->
+        <div class="md:hidden p-4 flex justify-end border-b" style="border-color: var(--border-color);">
+            <button onclick="toggleMobileMenu()" class="text-gray-400 hover:text-white cursor-pointer">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+
+        <!-- Controls (Hidden on Export) -->
+        <div class="p-6 border-b space-y-5 hide-on-export" style="border-color: var(--border-color);">
+            <div class="flex justify-between items-center">
+                <span class="text-xs font-bold uppercase tracking-wider flex items-center gap-2" style="color: var(--text-label);">
+                    <i data-lucide="sun-moon" class="w-4 h-4"></i> THEME
+                </span>
+                <div class="flex gap-2">
+                    <button class="btn-theme active px-4 py-1.5 text-xs font-bold tracking-widest" onclick="switchTheme('dark', this)">DARK</button>
+                    <button class="btn-theme px-4 py-1.5 text-xs font-bold tracking-widest" onclick="switchTheme('light', this)">LIGHT</button>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold mb-2 uppercase tracking-wide flex items-center gap-2" style="color: var(--text-label);">
+                    <i data-lucide="database" class="w-4 h-4"></i> DATA SOURCE
+                </label>
+                <div class="relative group hud-input-wrapper">
+                    <input type="file" id="csvInput" accept=".csv" class="block w-full text-xs text-transparent
+                        file:mr-0 file:py-3 file:px-4
+                        file:rounded-none file:border-0 file:bg-transparent
+                        file:text-xs file:font-bold file:uppercase file:tracking-widest file:text-sky-500
+                        cursor-pointer
+                    "/>
+                    <div class="absolute right-4 top-3 pointer-events-none text-[10px] font-bold tracking-widest flex items-center gap-1" style="color: var(--text-muted);">
+                        <i data-lucide="upload" class="w-3 h-3"></i> CSV
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="exportToHTML()" class="btn-primary w-full text-sm">
+                <i data-lucide="share-2" class="w-4 h-4"></i> EXPORT REPORT
+            </button>
+        </div>
+
+        <!-- Engine Info -->
+        <div class="p-6 border-b" style="border-color: var(--border-color);">
+            <h3 class="text-xs font-bold mb-4 tracking-widest uppercase flex items-center gap-2" style="color: var(--text-label);">
+                <i data-lucide="info" class="w-4 h-4"></i> Flight Log Info
+            </h3>
+            <div id="metaInfo" class="space-y-3 text-sm font-mono" style="color: var(--text-muted);">
+                <div class="flex justify-between items-center"><span class="text-xs">ENGINE</span> <span class="font-bold bg-slate-800/50 px-2 py-1 rounded" style="color: var(--text-main);" id="val-engine-type">--</span></div>
+                <div class="flex justify-between items-center"><span class="text-xs">LOG ID</span> <span class="font-bold bg-slate-800/50 px-2 py-1 rounded" style="color: var(--text-main);" id="val-engine-id">--</span></div>
+                <div class="flex justify-between items-center"><span class="text-xs">DATE</span> <span class="font-bold bg-slate-800/50 px-2 py-1 rounded" style="color: var(--text-main);" id="val-date">--</span></div>
+                <div class="flex justify-between items-center"><span class="text-xs">DURATION</span> <span class="font-bold bg-slate-800/50 px-2 py-1 rounded" style="color: var(--text-main);" id="val-duration">--</span></div>
+            </div>
+        </div>
+
+        <!-- Anomaly Feed -->
+        <div class="p-6 flex-grow overflow-y-auto">
+            <h3 class="text-xs font-bold mb-4 tracking-widest uppercase flex items-center gap-2" style="color: var(--danger-color);">
+                <i data-lucide="alert-triangle" class="w-4 h-4 animate-pulse"></i> ANOMALIES
+            </h3>
+            <div id="anomalyList" class="space-y-3">
+                <div class="text-xs text-center mt-12 tracking-widest flex flex-col items-center gap-2" style="color: var(--text-muted);">
+                    <i data-lucide="activity" class="w-8 h-8 opacity-20"></i>
+                    AWAITING DATA
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-grow h-full overflow-y-auto relative flex flex-col" style="background-color: var(--bg-body);">
+        
+        <!-- Top HUD Panel (Glassmorphism) -->
+        <div class="sticky top-0 z-30 border-b glass-panel shadow-sm" style="border-color: var(--border-color);">
+            <!-- Max Cards Row -->
+            <div class="px-6 py-4 flex flex-nowrap overflow-x-auto gap-4 items-center md:justify-between no-scrollbar" id="max-cards-container">
+                <!-- Cards injected here -->
+            </div>
+
+            <!-- Current Value HUD -->
+            <div class="px-6 py-2 border-t flex flex-col md:flex-row items-start md:items-center justify-between gap-2" style="border-color: var(--border-color); background: rgba(0,0,0,0.1);">
+                <div class="flex items-center gap-4">
+                    <div class="font-mono font-bold text-xl flex items-center gap-2" id="hud-time" style="color: var(--accent-color);">
+                        <i data-lucide="clock" class="w-4 h-4"></i> --:--:--
+                    </div>
+                    <div class="hidden md:block h-6 w-[1px]" style="background-color: var(--border-color);"></div>
+                    <div id="hud-main-values" class="flex flex-wrap gap-4 md:gap-8 text-sm font-mono" style="color: var(--text-main);"></div>
+                </div>
+                <div id="hud-egt-values" class="hidden md:flex items-center gap-6 font-mono text-sm"></div>
+            </div>
+        </div>
+
+        <!-- Charts Area -->
+        <div class="p-6 md:p-8 space-y-8 pb-24">
+            
+            <div id="empty-state" class="flex flex-col items-center justify-center h-[70vh] opacity-30">
+                <i data-lucide="line-chart" class="w-32 h-32 mb-6" style="color: var(--text-muted);"></i>
+                <h2 class="font-tech text-3xl tracking-widest" style="color: var(--text-muted);">READY FOR UPLOAD</h2>
+                <p class="text-sm mt-2 font-mono" style="color: var(--text-muted);">Import Rotax EngiBox CSV to begin analysis</p>
+            </div>
+
+            <div id="charts-area" class="hidden">
+                <!-- Power -->
+                <div class="chart-container">
+                    <div class="chart-header px-6 py-4 flex justify-between items-center">
+                        <h2 class="font-tech tracking-widest text-2xl flex items-center gap-2" style="color: var(--text-main);">
+                            <i data-lucide="zap" class="w-5 h-5 text-yellow-500"></i> POWER OUTPUT
+                        </h2>
+                        <div id="legend-power" class="flex gap-4"></div>
+                    </div>
+                    <div id="chart-power" class="w-full h-72"></div>
+                </div>
+
+                <!-- Combustion -->
+                <div class="chart-container">
+                    <div class="chart-header px-6 py-4 flex justify-between items-center">
+                        <h2 class="font-tech tracking-widest text-2xl flex items-center gap-2" style="color: var(--text-main);">
+                            <i data-lucide="flame" class="w-5 h-5 text-red-500"></i> COMBUSTION
+                        </h2>
+                        <div id="legend-combustion" class="flex gap-4 flex-wrap"></div>
+                    </div>
+                    <div id="chart-combustion" class="w-full h-96"></div>
+                </div>
+
+                <!-- Fluids -->
+                <div class="chart-container">
+                    <div class="chart-header px-6 py-4 flex justify-between items-center">
+                        <h2 class="font-tech tracking-widest text-2xl flex items-center gap-2" style="color: var(--text-main);">
+                            <i data-lucide="droplets" class="w-5 h-5 text-blue-500"></i> FLUID SYSTEMS
+                        </h2>
+                        <div id="legend-fluid" class="flex gap-4"></div>
+                    </div>
+                    <div id="chart-fluid" class="w-full h-72"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Shared Micro Tooltip -->
+    <div id="micro-tooltip" class="micro-tooltip"></div>
+
+<script>
+/**
+ * AVMAP EngiBox Analyzer v11.0 Pro
+ * - Standalone HTML Export Feature
+ * - Lucide Icons Integration
+ * - Glassmorphism UI & Slate Theme
+ */
+
+// Initialize Lucide Icons initially
+lucide.createIcons();
+
+// Global State
+let flightData = [];
+let dateSegments = []; 
+let globalXDomain = null;
+let currentZoomTransform = d3.zoomIdentity;
+let currentTheme = 'dark';
+window.rawCSVData = null; // Store for export
+
+// Smart Palettes
+const PALETTE = {
+    dark: {
+        rpm: '#38bdf8', map: '#facc15', oilP: '#4ade80', oilT: '#fb923c',
+        ct: '#60a5fa', egt1: '#f87171', egt2: '#fbbf24', egt3: '#e879f9', egt4: '#a78bfa'
+    },
+    light: {
+        rpm: '#0284c7', map: '#d97706', oilP: '#16a34a', oilT: '#ea580c',
+        ct: '#2563eb', egt1: '#dc2626', egt2: '#b45309', egt3: '#9333ea', egt4: '#7c3aed'
+    }
+};
+
+const LIMITS = {
+    oilT: { max: 130 }, ct: { max: 120 }, rpm: { max: 5800 },
+    oilP: { min: 0.8, max: 7.0 }, map: { max: 42 }, egt: { max: 900 } 
+};
+
+// Lucide Icons configuration for JS insertion
+const ICONS = {
+    rpm: '<i data-lucide="gauge" class="w-6 h-6"></i>',
+    map: '<i data-lucide="bar-chart-2" class="w-6 h-6"></i>',
+    oilT: '<i data-lucide="thermometer" class="w-6 h-6"></i>',
+    oilP: '<i data-lucide="droplet" class="w-6 h-6"></i>',
+    ct: '<i data-lucide="cpu" class="w-6 h-6"></i>',
+    egt: '<i data-lucide="flame" class="w-6 h-6"></i>'
+};
+
+// --- Mobile Sidebar Logic ---
+const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+const sidebar = document.getElementById('mainSidebar');
+const overlay = document.getElementById('sidebarOverlay');
+
+function toggleMobileMenu() {
+    sidebar.classList.toggle('-translate-x-full');
+    overlay.classList.toggle('hidden');
+}
+
+// --- Theme Logic ---
+function switchTheme(themeName, btn) {
+    document.body.setAttribute('data-theme', themeName);
+    currentTheme = themeName;
+    document.querySelectorAll('.btn-theme').forEach(b => b.classList.remove('active'));
+    if(btn) btn.classList.add('active');
+    
+    if (flightData.length > 0) {
+        renderMaxCards(flightData); 
+        initCharts(); 
+    }
+}
+document.body.setAttribute('data-theme', 'dark');
+
+function getColors() { return currentTheme === 'light' ? PALETTE.light : PALETTE.dark; }
+
+// --- Data Loading & Export Logic ---
+document.getElementById('csvInput').addEventListener('change', (e) => {
+    if(e.target.files[0]) {
+        const r = new FileReader();
+        r.onload = (ev) => {
+            window.rawCSVData = ev.target.result;
+            processCSV(ev.target.result);
+        };
+        r.readAsText(e.target.files[0]);
+    }
+});
+
+// Auto-load if this is an exported report
+window.addEventListener('DOMContentLoaded', () => {
+    const embedded = document.getElementById('embedded-csv');
+    if(embedded && embedded.textContent) {
+        document.body.classList.add('is-exported');
+        window.rawCSVData = embedded.textContent;
+        processCSV(embedded.textContent);
+    }
+});
+
+// EXPORT TO HTML FUNCTION
+function exportToHTML() {
+    if(!window.rawCSVData) return alert("Please load a CSV flight log first.");
+    
+    // Create a clone to manipulate safely without destroying current view
+    const clone = document.documentElement.cloneNode(true);
+    
+    // Clean up dynamic D3 containers in clone to keep file small & clean for re-init
+    clone.querySelector('#chart-power').innerHTML = '';
+    clone.querySelector('#chart-combustion').innerHTML = '';
+    clone.querySelector('#chart-fluid').innerHTML = '';
+    clone.querySelector('#anomalyList').innerHTML = '';
+    clone.querySelector('#max-cards-container').innerHTML = '';
+    
+    // Set exported flag
+    clone.querySelector('body').classList.add('is-exported');
+    
+    // Remove existing embedded script if any to prevent duplicates
+    const existing = clone.querySelector('#embedded-csv');
+    if(existing) existing.remove();
+    
+    // Inject the raw CSV data
+    const script = document.createElement('script');
+    script.id = 'embedded-csv';
+    script.type = 'text/plain';
+    script.textContent = window.rawCSVData;
+    clone.querySelector('body').appendChild(script);
+    
+    // Convert to Blob and Download
+    const htmlStr = "<!DOCTYPE html>\n" + clone.outerHTML;
+    const blob = new Blob([htmlStr], {type: 'text/html;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const dateStr = document.getElementById('val-date').textContent || 'Log';
+    a.download = `EngiBox_Report_${dateStr}.html`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+// --- Parse CSV ---
+function processCSV(text) {
+    try {
+        const lines = text.split('\n').filter(l => l.trim() !== '');
+        const meta = { engineType: 'Unknown', engineId: '--', lifetime: '--', date: '--' };
+        let headerIndex = -1;
+        for(let i=0; i<Math.min(lines.length, 30); i++) {
+            const row = lines[i];
+            if(row.includes('Engine Type')) meta.engineType = row.split(/[:;]/)[1]?.trim();
+            if(row.includes('Engine Id')) meta.engineId = row.split(/[:;]/)[1]?.trim();
+            if(row.toLowerCase().includes('date') && (row.toLowerCase().includes('rpm') || row.toLowerCase().includes('time'))) headerIndex = i;
+        }
+        if(headerIndex === -1) throw new Error("Header not found");
+
+        const headers = lines[headerIndex].split(';').map(h => h.trim().toLowerCase());
+        const keySearch = {
+            'date': ['date'], 'time': ['time'], 'rpm': ['rpm'], 'map': ['map'],
+            'oil t': ['oil t', 'oil temp'], 'oil p': ['oil p', 'oil press'], 'ct': ['ct', 'coolant', 'cyl head'],
+            'egt 1': ['egt 1', 'egt pto r'], 'egt 2': ['egt 2', 'egt pto l'], 
+            'egt 3': ['egt 3', 'egt mag r'], 'egt 4': ['egt 4', 'egt mag l']
+        };
+        const cols = {};
+        for (const [key, searchTerms] of Object.entries(keySearch)) {
+            cols[key] = headers.findIndex(h => searchTerms.some(term => h.includes(term)));
+        }
+
+        const data = [];
+        let lastTimeStr = "";
+        let subSecondCounter = 0;
+        let lastDateStr = "";
+        let currentSegment = null;
+        dateSegments = [];
+
+        for(let i = headerIndex + 1; i < lines.length; i++) {
+            const row = lines[i].split(';');
+            if(row.length < 2) continue;
+            const dStr = row[cols['date']];
+            const tStr = row[cols['time']];
+            if(!dStr || !tStr) continue;
+
+            if(dStr !== lastDateStr) {
+                if(currentSegment) { 
+                    currentSegment.endIndex = data.length - 1;
+                    dateSegments.push(currentSegment);
+                }
+                currentSegment = { date: dStr, startIndex: data.length };
+                lastDateStr = dStr;
+            }
+
+            if (tStr === lastTimeStr) subSecondCounter++;
+            else { subSecondCounter = 0; lastTimeStr = tStr; }
+
+            let dt;
+            const tParts = tStr.split(':');
+            const ms = subSecondCounter * 100;
+            
+            if (dStr.includes('-')) {
+                const dParts = dStr.split('-');
+                dt = new Date(dParts[0], dParts[1]-1, dParts[2], tParts[0], tParts[1], tParts[2]||0, ms);
+            } else {
+                const dParts = dStr.split('/');
+                dt = new Date(dParts[2], dParts[1]-1, dParts[0], tParts[0], tParts[1], tParts[2]||0, ms);
+            }
+
+            const pNum = (idx) => idx !== -1 && row[idx] ? parseFloat(row[idx].replace(',', '.').trim()) : null;
+
+            data.push({
+                fullTime: dt, dateStr: dStr,
+                rpm: pNum(cols['rpm']), map: pNum(cols['map']),
+                oilT: pNum(cols['oil t']), oilP: pNum(cols['oil p']), ct: pNum(cols['ct']),
+                egt1: pNum(cols['egt 1']), egt2: pNum(cols['egt 2']), egt3: pNum(cols['egt 3']), egt4: pNum(cols['egt 4']),
+            });
+        }
+        if(currentSegment) { currentSegment.endIndex = data.length - 1; dateSegments.push(currentSegment); }
+        data.sort((a,b) => a.fullTime - b.fullTime);
+        flightData = data;
+
+        updateMetaUI(meta, data);
+        renderMaxCards(data);
+        processAnomalies(data);
+        initCharts();
+    } catch(e) {
+        alert("Parse Error: " + e.message);
+        console.error(e);
+    }
+}
+
+// --- UI Logic ---
+function updateMetaUI(meta, data) {
+    document.getElementById('empty-state').classList.add('hidden');
+    document.getElementById('charts-area').classList.remove('hidden');
+    document.getElementById('val-engine-type').textContent = meta.engineType || "ROTAX 912/914";
+    document.getElementById('val-engine-id').textContent = meta.engineId;
+    if(data.length > 0) {
+        const d = data[0].fullTime;
+        const dateFormatted = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        document.getElementById('val-date').textContent = dateFormatted;
+        const mins = ((data[data.length-1].fullTime - data[0].fullTime)/60000).toFixed(1);
+        document.getElementById('val-duration').textContent = `${mins} min`;
+    }
+}
+
+function renderMaxCards(data) {
+    const container = document.getElementById('max-cards-container');
+    container.innerHTML = '';
+    const clr = getColors();
+
+    const configs = [
+        { label: 'RPM MAX', key: 'rpm', limit: LIMITS.rpm.max, icon: ICONS.rpm, color: clr.rpm },
+        { label: 'MAP MAX', key: 'map', limit: LIMITS.map.max, icon: ICONS.map, color: clr.map },
+        { label: 'OIL T MAX', key: 'oilT', limit: LIMITS.oilT.max, icon: ICONS.oilT, color: clr.oilT },
+        { label: 'OIL P MAX', key: 'oilP', limit: LIMITS.oilP.max, icon: ICONS.oilP, color: clr.oilP },
+        { label: 'CT MAX', key: 'ct', limit: LIMITS.ct.max, icon: ICONS.ct, color: clr.ct },
+        { label: 'EGT MAX', key: null, valFn: d=>Math.max(d.egt1||0,d.egt2||0,d.egt3||0,d.egt4||0), limit: LIMITS.egt.max, icon: ICONS.egt, color: clr.egt1 }
+    ];
+
+    configs.forEach(cfg => {
+        let maxVal = -Infinity;
+        let maxItem = null;
+        for (let i = 0; i < data.length; i++) {
+            const v = cfg.valFn ? cfg.valFn(data[i]) : data[i][cfg.key];
+            if (v != null && v > maxVal) { maxVal = v; maxItem = data[i]; }
+        }
+        if(maxItem == null) return;
+        
+        const isAlert = maxVal > cfg.limit;
+        const card = document.createElement('div');
+        card.className = `max-card ${isAlert ? 'alert-active' : ''}`;
+        
+        card.innerHTML = `
+            <div class="max-card-icon" style="color: ${cfg.color}">${cfg.icon}</div>
+            <div class="max-card-content">
+                <div class="max-card-label">${cfg.label}</div>
+                <div class="max-card-value">${maxVal}</div>
+            </div>
+        `;
+        card.onclick = () => focusOnTime(maxItem.fullTime);
+        container.appendChild(card);
+    });
+    
+    // Re-initialize Lucide Icons for newly injected HTML
+    lucide.createIcons();
+}
+
+function focusOnTime(targetDate) {
+    if (!charts.length) return;
+    const chart = charts[0];
+    const width = chart.w; 
+    const k = 10; 
+    const xPos = chart.x(targetDate);
+    const tx = (width / 2) - (xPos * k);
+    const transform = d3.zoomIdentity.translate(tx, 0).scale(k);
+    charts.forEach(c => { c.svg.transition().duration(800).call(c.zoom.transform, transform); });
+}
+
+function processAnomalies(data) {
+    const list = document.getElementById('anomalyList');
+    list.innerHTML = '';
+    
+    const checks = [
+        { key: 'rpm', name: 'RPM LIMIT', limit: LIMITS.rpm.max, op: '>' },
+        { key: 'map', name: 'MAP LIMIT', limit: LIMITS.map.max, op: '>' },
+        { key: 'oilT', name: 'OIL T HIGH', limit: LIMITS.oilT.max, op: '>' },
+        { key: 'ct', name: 'COOLANT HIGH', limit: LIMITS.ct.max, op: '>' },
+        { key: 'oilP', name: 'OIL P LOW', limit: LIMITS.oilP.min, op: '<', condition: d => d.rpm > 2500 },
+        { key: 'egt', name: 'EGT HIGH', limit: LIMITS.egt.max, op: '>', valFn: d => Math.max(d.egt1||0, d.egt2||0, d.egt3||0, d.egt4||0) }
+    ];
+
+    let rawEvents = [];
+    checks.forEach(chk => {
+        let cur = null;
+        data.forEach(d => {
+            let triggered = false;
+            let val = chk.valFn ? chk.valFn(d) : d[chk.key];
+            if (val == null) triggered = false;
+            else if(chk.condition && !chk.condition(d)) triggered = false;
+            else if(chk.op === '>' && val > chk.limit) triggered = true;
+            else if(chk.op === '<' && val < chk.limit) triggered = true;
+
+            if(triggered) {
+                if(!cur) cur = { name: chk.name, key: chk.key, start: d.fullTime, points: [] };
+                cur.points.push({t: d.fullTime, v: val});
+                cur.end = d.fullTime;
+            } else {
+                if(cur) { rawEvents.push(cur); cur = null; }
+            }
+        });
+        if(cur) rawEvents.push(cur);
+    });
+
+    if (rawEvents.length > 0) {
+        rawEvents.sort((a, b) => {
+            if (a.key < b.key) return -1;
+            if (a.key > b.key) return 1;
+            return a.start - b.start;
+        });
+
+        const mergedEvents = [];
+        let current = rawEvents[0];
+        for (let i = 1; i < rawEvents.length; i++) {
+            const next = rawEvents[i];
+            const timeDiff = next.start - current.end; 
+            if (next.key === current.key && timeDiff < 5000) {
+                current.points = current.points.concat(next.points);
+                current.end = next.end;
+            } else {
+                mergedEvents.push(current);
+                current = next;
+            }
+        }
+        mergedEvents.push(current);
+        mergedEvents.sort((a, b) => a.start - b.start);
+        renderAnomalyList(mergedEvents.slice(0, 50));
+    } else {
+        list.innerHTML = `<div class="text-center font-mono text-sm mt-10 p-4 border rounded-xl" style="color:var(--text-highlight); border-color:var(--border-color); background:rgba(0,0,0,0.2)">
+            <i data-lucide="check-circle" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+            ALL SYSTEMS NOMINAL
+        </div>`;
+        lucide.createIcons();
+    }
+}
+
+function renderAnomalyList(events) {
+    const list = document.getElementById('anomalyList');
+    events.forEach(evt => {
+        const div = document.createElement('div');
+        div.className = 'micro-chart-container';
+        const dur = (evt.end - evt.start)/1000;
+        const maxV = d3.max(evt.points, p=>p.v);
+        
+        div.innerHTML = `
+            <div class="flex justify-between text-base font-tech mb-2" style="color:var(--text-muted)">
+                <span class="font-bold tracking-wider" style="color:var(--danger-color)">${evt.name}</span>
+                <span>${maxV} <span class="text-[10px]">MAX</span></span>
+            </div>
+            <div class="flex justify-between text-[11px] font-mono" style="color:var(--text-label)">
+                <span>${evt.start.toLocaleTimeString('en-US', {hour12:false})}</span>
+                <span>${dur.toFixed(1)}s</span>
+            </div>
+        `;
+        const w=240, h=40; 
+        const svg = d3.select(div).append('svg').attr('viewBox',`0 0 ${w} ${h}`).attr('class','w-full h-10 mt-2');
+        const x = d3.scaleTime().domain(d3.extent(evt.points, p=>p.t)).range([2, w-2]); 
+        
+        const yMin = d3.min(evt.points, p=>p.v);
+        const yMax = d3.max(evt.points, p=>p.v);
+        const yPad = (yMax - yMin) * 0.2 || 1; 
+        const y = d3.scaleLinear().domain([yMin - yPad, yMax + yPad]).range([h-2, 2]);
+
+        const line = d3.line().curve(d3.curveMonotoneX).x(d=>x(d.t)).y(d=>y(d.v));
+        const area = d3.area().curve(d3.curveMonotoneX).x(d=>x(d.t)).y0(h).y1(d=>y(d.v));
+        
+        svg.append('path').datum(evt.points).attr('class', 'sparkline-area').attr('d', area);
+        svg.append('path').datum(evt.points).attr('class', 'sparkline-path').attr('d', line);
+        
+        // Micro Tooltip
+        svg.append("rect")
+            .attr("class", "micro-overlay")
+            .attr("width", w).attr("height", h).style("opacity", 0)
+            .on("mousemove", function(e) {
+                const [mx] = d3.pointer(e);
+                const dt = x.invert(mx);
+                const idx = d3.bisector(p => p.t).left(evt.points, dt);
+                const pt = evt.points[idx] || evt.points[evt.points.length-1];
+                if (pt) {
+                    const cx = x(pt.t);
+                    const cy = y(pt.v);
+                    dot.attr("cx", cx).attr("cy", cy).style("opacity", 1);
+                    const tt = document.getElementById('micro-tooltip');
+                    const timeStr = pt.t.toLocaleTimeString('en-US', { hour12: false });
+                    tt.innerHTML = `<div>${timeStr}</div><div style="font-weight:bold; color:var(--danger-color)">${pt.v}</div>`;
+                    tt.style.display = 'block';
+                    tt.style.left = (e.pageX + 10) + 'px';
+                    tt.style.top = (e.pageY - 40) + 'px';
+                }
+            })
+            .on("mouseleave", function() {
+                dot.style("opacity", 0);
+                document.getElementById('micro-tooltip').style.display = 'none';
+            });
+
+        const dot = svg.append("circle").attr("class", "micro-hover-dot").attr("r", 3);
+        list.appendChild(div);
+    });
+}
+
+// --- Charting ---
+function initCharts() {
+    charts = [];
+    d3.select("#chart-power").html("");
+    d3.select("#chart-combustion").html("");
+    d3.select("#chart-fluid").html("");
+    const clr = getColors();
+    globalXDomain = d3.extent(flightData, d => d.fullTime);
+    const zoom = d3.zoom().scaleExtent([1, 50]).translateExtent([[0,0],[Infinity,Infinity]])
+        .on("zoom", e => { currentZoomTransform = e.transform; updateAllCharts(); });
+
+    createChart("#chart-power", [
+        { key: 'rpm', label: 'RPM', color: clr.rpm, axis: 'left', limit: LIMITS.rpm.max },
+        { key: 'map', label: 'MAP', color: clr.map, axis: 'right', limit: LIMITS.map.max }
+    ], zoom);
+
+    createChart("#chart-combustion", [
+        { key: 'egt1', label: 'EGT 1', color: clr.egt1, axis: 'left' },
+        { key: 'egt2', label: 'EGT 2', color: clr.egt2, axis: 'left' },
+        { key: 'egt3', label: 'EGT 3', color: clr.egt3, axis: 'left' },
+        { key: 'egt4', label: 'EGT 4', color: clr.egt4, axis: 'left' },
+        { key: 'ct', label: 'CT', color: clr.ct, axis: 'right', limit: LIMITS.ct.max }
+    ], zoom);
+
+    createChart("#chart-fluid", [
+        { key: 'oilT', label: 'OIL T', color: clr.oilT, axis: 'left', limit: LIMITS.oilT.max },
+        { key: 'oilP', label: 'OIL P', color: clr.oilP, axis: 'right', limit: LIMITS.oilP.max }
+    ], zoom);
+}
+
+function createChart(id, series, zoom) {
+    const el = document.querySelector(id);
+    const w = el.clientWidth, h = el.clientHeight;
+    const m = {t:20, r:50, b:30, l:50};
+    
+    const svg = d3.select(id).append("svg").attr("width", w).attr("height", h);
+    svg.append("defs").append("clipPath").attr("id", `clip-${id.substring(1)}`)
+        .append("rect").attr("width", w - m.l - m.r).attr("height", h - m.t - m.b);
+
+    const g = svg.append("g").attr("transform", `translate(${m.l},${m.t})`);
+    
+    const x = d3.scaleTime().domain(globalXDomain).range([0, w - m.l - m.r]);
+    const yL = d3.scaleLinear().range([h - m.t - m.b, 0]);
+    const yR = d3.scaleLinear().range([h - m.t - m.b, 0]);
+
+    const lData = series.filter(s=>s.axis==='left'), rData = series.filter(s=>s.axis==='right');
+    const getDom = (arr) => {
+        if(!arr.length) return [0,100];
+        const min = d3.min(flightData, d => d3.min(arr, s=>d[s.key])) || 0;
+        const max = d3.max(flightData, d => d3.max(arr, s=>d[s.key])) || 100;
+        return [min*0.9, max*1.1];
+    };
+    yL.domain(getDom(lData));
+    yR.domain(getDom(rData));
+
+    const bandGroup = g.append("g");
+    const xG = g.append("g").attr("transform", `translate(0,${h-m.t-m.b})`).attr("class", "axis");
+    const yLG = g.append("g").attr("class", "axis");
+    const yRG = g.append("g").attr("class", "axis").attr("transform", `translate(${w-m.l-m.r},0)`);
+    const limitGroup = g.append("g").attr("clip-path", `url(#clip-${id.substring(1)})`);
+    const lineGroup = g.append("g").attr("clip-path", `url(#clip-${id.substring(1)})`);
+    
+    series.forEach(s => {
+        lineGroup.append("path").attr("class", `line-${s.key}`).attr("fill", "none")
+            .attr("stroke", s.color).attr("stroke-width", 2); // Thicker lines for modern look
+    });
+
+    const overlay = svg.append("rect").attr("class","overlay")
+        .attr("width", w-m.l-m.r).attr("height", h-m.t-m.b)
+        .attr("transform", `translate(${m.l},${m.t})`)
+        .call(zoom).on("mousemove", mousemove).on("mouseleave", mouseleave)
+        .on("dblclick", () => svg.transition().call(zoom.transform, d3.zoomIdentity));
+
+    const legId = id.replace("chart-", "legend-");
+    const legEl = document.querySelector(legId);
+    if(legEl) {
+        legEl.innerHTML = '';
+        series.forEach(s => {
+            const d = document.createElement('div');
+            d.className = "legend-item text-xs font-bold flex items-center gap-2";
+            d.style.color = s.color;
+            d.innerHTML = `<span style="width:10px;height:10px;background:${s.color};border-radius:3px"></span> ${s.label}`;
+            d.onclick = () => {
+                const path = lineGroup.select(`.line-${s.key}`);
+                const op = path.style("opacity") === "0" ? 1 : 0;
+                path.transition().style("opacity", op);
+                d.style.opacity = op === 0 ? 0.4 : 1;
+                d.style.transform = op === 0 ? "scale(0.95)" : "scale(1)";
+            };
+            legEl.appendChild(d);
+        });
+    }
+
+    const crosshair = g.append("line").attr("class", "crosshair-line").attr("y2", h-m.t-m.b);
+    const dots = g.selectAll(".dot").data(series).enter().append("circle").attr("r",4).attr("fill", d=>d.color).style("opacity",0);
+
+    charts.push({
+        id, svg, g, x, yL, yR, xG, yLG, yRG, lineGroup, bandGroup, limitGroup,
+        series, crosshair, dots, w: w-m.l-m.r, h: h-m.t-m.b, zoom
+    });
+
+    function mousemove(e) {
+        const [mx] = d3.pointer(e);
+        const newX = currentZoomTransform.rescaleX(x);
+        const date = newX.invert(mx);
+        const idx = d3.bisector(d=>d.fullTime).left(flightData, date);
+        const d = flightData[idx];
+        if(d) {
+            updateCrosshairs(d);
+            updateHUD(d);
+        }
+    }
+    function mouseleave() { charts.forEach(c => { c.crosshair.style("opacity",0); c.dots.style("opacity",0); }); }
+}
+
+function updateAllCharts() {
+    charts.forEach(c => {
+        const newX = currentZoomTransform.rescaleX(c.x);
+        c.xG.call(d3.axisBottom(newX).ticks(5).tickFormat(d3.timeFormat("%H:%M:%S")));
+        c.yLG.call(d3.axisLeft(c.yL).ticks(5));
+        c.yRG.call(d3.axisRight(c.yR).ticks(5));
+        
+        // Axis Color Mapping
+        const sLeft = c.series.find(s => s.axis === 'left');
+        if (sLeft) c.yLG.selectAll("text").style("fill", sLeft.color);
+        const sRight = c.series.find(s => s.axis === 'right');
+        if (sRight) c.yRG.selectAll("text").style("fill", sRight.color);
+
+        const style = getComputedStyle(document.body);
+        c.svg.selectAll(".axis line, .axis path").style("stroke", style.getPropertyValue('--border-color'));
+        c.svg.selectAll(".grid-line").style("stroke", style.getPropertyValue('--grid-line'));
+
+        c.bandGroup.selectAll("*").remove();
+        dateSegments.forEach((seg, i) => {
+            if(i % 2 !== 0) {
+                const x1 = newX(flightData[seg.startIndex].fullTime);
+                const x2 = newX(flightData[seg.endIndex].fullTime);
+                if (x2 > 0 && x1 < c.w) {
+                    c.bandGroup.append("rect")
+                        .attr("x", x1).attr("y", 0).attr("width", Math.max(1, x2 - x1))
+                        .attr("height", c.h).attr("fill", "var(--grid-line)").attr("opacity", 0.15);
+                }
+            }
+        });
+
+        c.limitGroup.selectAll("*").remove();
+        c.series.forEach(s => {
+            const lineGen = d3.line().curve(d3.curveMonotoneX)
+                .defined((d, i) => {
+                    if (i > 0 && flightData[i].dateStr !== flightData[i-1].dateStr) return false;
+                    return d[s.key] != null;
+                })
+                .x(d => newX(d.fullTime)).y(d => (s.axis==='left'?c.yL:c.yR)(d[s.key]));
+            c.lineGroup.select(`.line-${s.key}`).attr("d", lineGen(flightData)).attr("stroke", s.color);
+
+            if(s.limit) {
+                const visibleData = flightData.filter(d => {
+                    const px = newX(d.fullTime);
+                    return px >= 0 && px <= c.w && d[s.key] > s.limit;
+                });
+                c.limitGroup.selectAll(`.anom-${s.key}`)
+                    .data(visibleData).enter().append("rect")
+                    .attr("x", d => newX(d.fullTime)).attr("y", 0).attr("width", 2).attr("height", c.h)
+                    .attr("class", "anomaly-highlight");
+            }
+        });
+    });
+}
+
+function updateCrosshairs(d) {
+    charts.forEach(c => {
+        const newX = currentZoomTransform.rescaleX(c.x);
+        const xp = newX(d.fullTime);
+        if(xp < 0 || xp > c.w) return;
+        c.crosshair.attr("transform", `translate(${xp},0)`).style("opacity", 1);
+        c.dots.attr("cx", xp).attr("cy", s => (s.axis==='left'?c.yL:c.yR)(d[s.key])).style("opacity", 1);
+    });
+}
+
+function updateHUD(d) {
+    const dateFormatted = d.fullTime.getFullYear() + '-' + 
+                          String(d.fullTime.getMonth() + 1).padStart(2, '0') + '-' + 
+                          String(d.fullTime.getDate()).padStart(2, '0');
+    const timeS = d.fullTime.toLocaleTimeString('en-US', {hour12:false});
+    
+    // Update time with icon keeping intact
+    document.getElementById('hud-time').innerHTML = `<i data-lucide="clock" class="w-4 h-4"></i> ${dateFormatted} ${timeS}`;
+    
+    const clr = getColors();
+    const val = (v, c) => `<span style="color:${c}" class="font-bold text-2xl">${v!=null?v:'--'}</span>`;
+    const label = (l) => `<span class="text-xs font-bold uppercase tracking-wider" style="color:var(--text-label)">${l}</span>`;
+
+    document.getElementById('hud-main-values').innerHTML = `
+        <div class="flex flex-col">${label('RPM')}${val(d.rpm, clr.rpm)}</div>
+        <div class="flex flex-col">${label('MAP')}${val(d.map, clr.map)}</div>
+        <div class="flex flex-col border-l pl-4" style="border-color:var(--border-color)">${label('OIL P')}${val(d.oilP, clr.oilP)}</div>
+        <div class="flex flex-col">${label('OIL T')}${val(d.oilT, clr.oilT)}</div>
+        <div class="flex flex-col border-l pl-4" style="border-color:var(--border-color)">${label('CT')}${val(d.ct, clr.ct)}</div>
+    `;
+    
+    document.getElementById('hud-egt-values').innerHTML = `
+        <span class="mr-1 font-bold text-sm tracking-widest uppercase" style="color:var(--text-muted)">EGT</span>
+        <span style="color:${clr.egt1}" class="text-xl font-bold bg-slate-800/30 px-2 rounded">${d.egt1}</span>
+        <span style="color:${clr.egt2}" class="text-xl font-bold bg-slate-800/30 px-2 rounded">${d.egt2}</span>
+        <span style="color:${clr.egt3}" class="text-xl font-bold bg-slate-800/30 px-2 rounded">${d.egt3}</span>
+        <span style="color:${clr.egt4}" class="text-xl font-bold bg-slate-800/30 px-2 rounded">${d.egt4}</span>
+    `;
+    
+    // Quick re-init for newly added clock icon in HUD
+    lucide.createIcons({
+        nameAttr: 'data-lucide',
+        attrs: { class: 'w-4 h-4' }
+    });
+}
+
+window.addEventListener('resize', () => { if(flightData.length) initCharts(); });
+</script>
+</body>
+</html>
