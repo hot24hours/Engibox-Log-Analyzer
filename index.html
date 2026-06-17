@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AVMAP EngiBox Analyst (v11.0 Pro)</title>
+    <title>AVMAP EngiBox Analyst (v12.0 Dev Sandbox)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- D3.js v7 -->
@@ -319,9 +319,9 @@
         <div class="p-6 border-b hidden md:block" style="border-color: var(--border-color);">
             <h1 class="text-3xl font-tech font-bold tracking-wider flex items-center gap-3" style="color: var(--text-main);">
                 <i data-lucide="plane" class="w-7 h-7" style="color: var(--accent-color);"></i>
-                ENGIBOX <span style="color: var(--accent-color);">PRO</span>
+                ENGIBOX <span style="color: var(--accent-color);">DEV</span>
             </h1>
-            <p class="text-[10px] tracking-[0.2em] mt-1 pl-10 font-bold" style="color: var(--text-label);">V11.0 ANALYTICS SUITE</p>
+            <p class="text-[10px] tracking-[0.2em] mt-1 pl-10 font-bold" style="color: var(--text-label);">V12.0 SANDBOX</p>
         </div>
 
         <!-- Mobile Menu Close Button -->
@@ -466,7 +466,7 @@
 
 <script>
 /**
- * AVMAP EngiBox Analyzer v11.0 Pro
+ * AVMAP EngiBox Analyzer v12.0 Dev Sandbox
  * - Standalone HTML Export Feature
  * - Lucide Icons Integration
  * - Glassmorphism UI & Slate Theme
@@ -906,12 +906,12 @@ function initCharts() {
         { key: 'egt1', label: 'EGT 1', color: clr.egt1, axis: 'left' },
         { key: 'egt2', label: 'EGT 2', color: clr.egt2, axis: 'left' },
         { key: 'egt3', label: 'EGT 3', color: clr.egt3, axis: 'left' },
-        { key: 'egt4', label: 'EGT 4', color: clr.egt4, axis: 'left' },
-        { key: 'ct', label: 'CT', color: clr.ct, axis: 'right', limit: LIMITS.ct.max }
+        { key: 'egt4', label: 'EGT 4', color: clr.egt4, axis: 'left' }
     ], zoom);
 
     createChart("#chart-fluid", [
         { key: 'oilT', label: 'OIL T', color: clr.oilT, axis: 'left', limit: LIMITS.oilT.max },
+        { key: 'ct', label: 'CT', color: clr.ct, axis: 'left', limit: LIMITS.ct.max },
         { key: 'oilP', label: 'OIL P', color: clr.oilP, axis: 'right', limit: LIMITS.oilP.max }
     ], zoom);
 }
