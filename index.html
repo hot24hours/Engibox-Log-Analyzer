@@ -962,6 +962,10 @@ function createChart(id, series, zoom) {
     yL.domain(getDom(lData));
     yR.domain(getDom(rData));
 
+    // 同步空缺軸的網域，確保左右刻度一致對稱
+    if (lData.length > 0 && rData.length === 0) yR.domain(yL.domain());
+    if (rData.length > 0 && lData.length === 0) yL.domain(yR.domain());
+
     const bandGroup = g.append("g");
     const xG = g.append("g").attr("transform", `translate(0,${h-m.t-m.b})`).attr("class", "axis");
     const yLG = g.append("g").attr("class", "axis");
@@ -1088,7 +1092,12 @@ function updateAllCharts() {
         const sLeft = c.series.find(s => s.axis === 'left');
         if (sLeft) c.yLG.selectAll("text").style("fill", sLeft.color);
         const sRight = c.series.find(s => s.axis === 'right');
-        if (sRight) c.yRG.selectAll("text").style("fill", sRight.color);
+        if (sRight) {
+            c.yRG.selectAll("text").style("fill", sRight.color);
+        } else if (sLeft) {
+            // 若右側無獨立參數，使其文字顏色與左側一致，保持視覺對稱
+            c.yRG.selectAll("text").style("fill", sLeft.color);
+        }
 
         const style = getComputedStyle(document.body);
         c.svg.selectAll(".axis line, .axis path").style("stroke", style.getPropertyValue('--border-color'));
