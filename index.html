@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AVMAP EngiBox Analyst (v12.0 Dev Sandbox)</title>
+    <title>AVMAP EngiBox Analyst (v14.0 Overlay Edition)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- D3.js v7 -->
@@ -18,59 +18,44 @@
     <style>
         /* --- Modern UI CSS Variables --- */
         :root {
-            /* Theme: Pro Dark (Slate/Navy based) */
-            --bg-body: #0f172a; /* Slate 900 */
-            --bg-sidebar: #1e293b; /* Slate 800 */
+            --bg-body: #0f172a; 
+            --bg-sidebar: #1e293b; 
             --bg-panel: #1e293b;
             --bg-input: #0f172a;
-            
             --text-main: #f8fafc;
-            --text-highlight: #38bdf8; /* Light Blue */
+            --text-highlight: #38bdf8; 
             --text-muted: #94a3b8;
             --text-label: #38bdf8;
-            
             --border-color: #334155;
             --grid-line: #1e293b;
             --accent-color: #0ea5e9;
-            
             --danger-color: #ef4444;
             --danger-glow: rgba(239, 68, 68, 0.4);
-            
             --chart-bg: #0f172a;
             --chart-header-bg: #1e293b;
-            
-            /* Glassmorphism Background for Top Panel */
             --hud-bg: rgba(30, 41, 59, 0.75);
-            
             --tooltip-bg: rgba(15, 23, 42, 0.95);
             --tooltip-text: #f8fafc;
             --tooltip-border: #334155;
         }
 
         [data-theme="light"] {
-            /* Theme: Engineering Light */
-            --bg-body: #f1f5f9; /* Slate 100 */
-            --bg-sidebar: #ffffff; /* Pure White */
+            --bg-body: #f1f5f9; 
+            --bg-sidebar: #ffffff; 
             --bg-panel: #ffffff;
             --bg-input: #f8fafc;
-            
             --text-main: #0f172a;
             --text-highlight: #0284c7;
             --text-muted: #64748b;
             --text-label: #475569;
-            
             --border-color: #e2e8f0;
             --grid-line: #cbd5e1;
             --accent-color: #0284c7;
-            
             --danger-color: #dc2626;
             --danger-glow: rgba(220, 38, 38, 0.2);
-            
             --chart-bg: #ffffff;
             --chart-header-bg: #f8fafc;
-            
             --hud-bg: rgba(255, 255, 255, 0.85);
-            
             --tooltip-bg: rgba(255, 255, 255, 0.98);
             --tooltip-text: #1e293b;
             --tooltip-border: #cbd5e1;
@@ -87,21 +72,19 @@
         .font-mono { font-family: 'Roboto Mono', monospace; }
         .font-tech { font-family: 'Teko', sans-serif; letter-spacing: 0.08em; }
 
-        /* Scrollbar */
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: var(--bg-body); }
         ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
-        /* Modern Chart Containers */
         .chart-container {
             background-color: var(--chart-bg);
             border: 1px solid var(--border-color);
-            border-radius: 12px; /* Rounded corners */
+            border-radius: 12px;
             margin-bottom: 2rem;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); /* Soft shadow */
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
             transition: all 0.3s ease;
         }
         [data-theme="light"] .chart-container {
@@ -112,7 +95,6 @@
             border-bottom: 1px solid var(--border-color);
         }
 
-        /* D3 Elements */
         .axis line, .axis path { stroke: var(--border-color); }
         .axis text { font-size: 11px; font-family: 'Roboto Mono', monospace; font-weight: 500; }
         .grid-line { stroke: var(--grid-line); stroke-opacity: 0.8; stroke-dasharray: 2 2; pointer-events: none; }
@@ -120,7 +102,6 @@
         .overlay { fill: none; pointer-events: all; cursor: crosshair; }
         .anomaly-highlight { fill: var(--danger-color); fill-opacity: 0.1; pointer-events: none; }
         
-        /* Max Card - Interactive */
         .max-card {
             background: var(--bg-panel);
             padding: 8px 16px;
@@ -136,13 +117,11 @@
             cursor: pointer;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
-        
         .max-card:hover {
             transform: translateY(-3px);
             border-color: var(--accent-color);
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
         }
-        
         .max-card-icon {
             color: var(--text-muted);
             transition: color 0.3s;
@@ -150,7 +129,6 @@
             align-items: center;
             justify-content: center;
         }
-        
         .max-card-label {
             font-family: 'Teko', sans-serif;
             font-size: 1.1rem;
@@ -159,7 +137,6 @@
             line-height: 1;
             text-transform: uppercase;
         }
-
         .max-card-value {
             font-family: 'Roboto Mono', monospace;
             font-size: 1.4rem;
@@ -169,24 +146,18 @@
             margin-top: 2px;
         }
 
-        /* Alert Animation - Soft Glow */
         @keyframes soft-pulse-border {
             0% { box-shadow: 0 0 0 0 var(--danger-glow); border-color: var(--danger-color); }
             70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); border-color: var(--danger-color); }
             100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); border-color: var(--border-color); }
         }
-
-        .alert-active {
-            animation: soft-pulse-border 2s infinite;
-        }
-        
+        .alert-active { animation: soft-pulse-border 2s infinite; }
         .alert-active .max-card-icon,
         .alert-active .max-card-label,
         .alert-active .max-card-value {
             color: var(--danger-color) !important;
         }
         
-        /* Interactive Elements */
         .legend-item { 
             cursor: pointer; 
             user-select: none; 
@@ -194,11 +165,8 @@
             padding: 4px 8px;
             border-radius: 4px;
         }
-        .legend-item:hover {
-            background: rgba(128, 128, 128, 0.1);
-        }
+        .legend-item:hover { background: rgba(128, 128, 128, 0.1); }
 
-        /* Micro Chart */
         .micro-chart-container {
             background-color: var(--bg-panel);
             border: 1px solid var(--border-color);
@@ -214,7 +182,6 @@
         .micro-overlay { fill: none; pointer-events: all; cursor: crosshair; }
         .micro-hover-dot { fill: var(--text-highlight); stroke: #fff; stroke-width: 2px; pointer-events: none; opacity: 0; }
 
-        /* Tooltip */
         .micro-tooltip {
             position: absolute;
             background: var(--tooltip-bg);
@@ -231,7 +198,6 @@
             display: none;
         }
 
-        /* Main Chart Dynamic Tooltip */
         .chart-tooltip {
             position: absolute;
             background: var(--tooltip-bg);
@@ -249,7 +215,6 @@
             -webkit-backdrop-filter: blur(12px);
         }
 
-        /* Buttons */
         .btn-theme {
             background-color: var(--bg-input);
             color: var(--text-muted);
@@ -270,7 +235,6 @@
             font-weight: 700;
         }
 
-        /* Primary Button */
         .btn-primary {
             background: linear-gradient(135deg, var(--accent-color), #0284c7);
             color: #fff;
@@ -292,7 +256,6 @@
             box-shadow: 0 6px 20px rgba(14, 165, 233, 0.4);
         }
 
-        /* Input styling */
         .hud-input-wrapper {
             background: var(--bg-input);
             border: 1px solid var(--border-color);
@@ -301,56 +264,46 @@
             cursor: pointer;
             transition: all 0.3s;
         }
-        .hud-input-wrapper:hover {
-            border-color: var(--accent-color);
-        }
-
-        /* Exported State Logic */
-        .is-exported .hide-on-export {
-            display: none !important;
-        }
+        .hud-input-wrapper:hover { border-color: var(--accent-color); }
         
+        select option { background-color: var(--bg-panel); color: var(--text-main); }
+        .is-exported .hide-on-export { display: none !important; }
         .glass-panel {
             background-color: var(--hud-bg);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
         }
-
     </style>
 </head>
 <body class="h-screen flex flex-col md:flex-row overflow-hidden relative">
 
-    <!-- Mobile Header -->
     <div class="md:hidden flex items-center justify-between p-4 border-b z-40 relative glass-panel" style="border-color: var(--border-color);">
-        <h1 class="text-xl font-tech font-bold tracking-wider" style="color: var(--text-main);">ENGIBOX <span style="color: var(--accent-color);">PRO</span></h1>
+        <h1 class="text-xl font-tech font-bold tracking-wider" style="color: var(--text-main);">ENGIBOX <span style="color: var(--accent-color);">OVERLAY</span></h1>
         <button id="mobileMenuBtn" class="text-gray-400 hover:text-white p-2 cursor-pointer transition-colors">
             <i data-lucide="menu"></i>
         </button>
     </div>
 
-    <!-- Sidebar Overlay (Mobile) -->
     <div id="sidebarOverlay" class="fixed inset-0 bg-slate-900/80 z-40 hidden md:hidden backdrop-blur-sm cursor-pointer transition-opacity" onclick="toggleMobileMenu()"></div>
 
-    <!-- Sidebar -->
     <aside id="mainSidebar" class="fixed md:relative w-72 md:w-80 flex-shrink-0 flex flex-col h-full z-50 border-r transition-transform duration-300 ease-in-out transform -translate-x-full md:translate-x-0 shadow-2xl md:shadow-none" style="background-color: var(--bg-sidebar); border-color: var(--border-color);">
-        <!-- Header (Desktop) -->
         <div class="p-6 border-b hidden md:block" style="border-color: var(--border-color);">
             <h1 class="text-3xl font-tech font-bold tracking-wider flex items-center gap-3" style="color: var(--text-main);">
-                <i data-lucide="plane" class="w-7 h-7" style="color: var(--accent-color);"></i>
-                ENGIBOX <span style="color: var(--accent-color);">DEV</span>
+                <i data-lucide="layers" class="w-7 h-7" style="color: var(--accent-color);"></i>
+                ENGIBOX <span style="color: var(--accent-color);">PRO</span>
             </h1>
-            <p class="text-[10px] tracking-[0.2em] mt-1 pl-10 font-bold" style="color: var(--text-label);">V12.0 SANDBOX</p>
+            <p class="text-[10px] tracking-[0.2em] mt-1 pl-10 font-bold" style="color: var(--text-label);">V14.0 OVERLAY EDITION</p>
         </div>
 
-        <!-- Mobile Menu Close Button -->
         <div class="md:hidden p-4 flex justify-end border-b" style="border-color: var(--border-color);">
             <button onclick="toggleMobileMenu()" class="text-gray-400 hover:text-white cursor-pointer">
                 <i data-lucide="x"></i>
             </button>
         </div>
 
-        <!-- Controls (Hidden on Export) -->
+        <!-- Controls -->
         <div class="p-6 border-b space-y-5 hide-on-export" style="border-color: var(--border-color);">
+            
             <div class="flex justify-between items-center">
                 <span class="text-xs font-bold uppercase tracking-wider flex items-center gap-2" style="color: var(--text-label);">
                     <i data-lucide="sun-moon" class="w-4 h-4"></i> THEME
@@ -360,8 +313,24 @@
                     <button class="btn-theme px-4 py-1.5 text-xs font-bold tracking-widest" onclick="switchTheme('light', this)">LIGHT</button>
                 </div>
             </div>
+            
+            <!-- OVERLAY MODE TOGGLE -->
+            <div class="flex justify-between items-center pt-2">
+                <span class="text-xs font-bold uppercase tracking-wider flex items-center gap-2" style="color: var(--text-label);">
+                    <i data-lucide="line-chart" class="w-4 h-4"></i> MODE
+                </span>
+                <div class="flex gap-2">
+                    <button id="btnModeStandard" class="btn-theme active px-3 py-1.5 text-[10px] font-bold tracking-widest" onclick="setOverlayMode(false)">SINGLE</button>
+                    <button id="btnModeOverlay" class="btn-theme px-3 py-1.5 text-[10px] font-bold tracking-widest relative group" onclick="setOverlayMode(true)">
+                        OVERLAY
+                        <span class="absolute hidden group-hover:block w-48 bg-black text-white text-[10px] p-2 rounded -top-10 left-1/2 transform -translate-x-1/2 z-50 normal-case shadow-xl">
+                            Compare all sessions mapped to relative Engine-Start time.
+                        </span>
+                    </button>
+                </div>
+            </div>
 
-            <div>
+            <div class="pt-2">
                 <label class="block text-xs font-bold mb-2 uppercase tracking-wide flex items-center gap-2" style="color: var(--text-label);">
                     <i data-lucide="database" class="w-4 h-4"></i> DATA SOURCE
                 </label>
@@ -377,8 +346,21 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Session Selector -->
+            <div id="session-container" class="hidden pt-4 border-t" style="border-color: var(--border-color);">
+                <label class="block text-xs font-bold mb-2 uppercase tracking-wide flex items-center gap-2" style="color: var(--text-label);">
+                    <i data-lucide="calendar" class="w-4 h-4"></i> FOCUS SESSION
+                </label>
+                <div class="relative hud-input-wrapper">
+                    <select id="sessionSelect" class="w-full bg-transparent text-xs p-3 appearance-none font-mono outline-none cursor-pointer" style="color: var(--text-main);" onchange="handleSessionChange(event)"></select>
+                    <div class="absolute right-3 top-3 pointer-events-none">
+                        <i data-lucide="chevron-down" class="w-4 h-4" style="color: var(--text-muted);"></i>
+                    </div>
+                </div>
+            </div>
 
-            <button onclick="exportToHTML()" class="btn-primary w-full text-sm">
+            <button onclick="exportToHTML()" class="btn-primary w-full text-sm mt-2">
                 <i data-lucide="share-2" class="w-4 h-4"></i> EXPORT REPORT
             </button>
         </div>
@@ -386,7 +368,7 @@
         <!-- Engine Info -->
         <div class="p-6 border-b" style="border-color: var(--border-color);">
             <h3 class="text-xs font-bold mb-4 tracking-widest uppercase flex items-center gap-2" style="color: var(--text-label);">
-                <i data-lucide="info" class="w-4 h-4"></i> Flight Log Info
+                <i data-lucide="info" class="w-4 h-4"></i> FOCUS Info
             </h3>
             <div id="metaInfo" class="space-y-3 text-sm font-mono" style="color: var(--text-muted);">
                 <div class="flex justify-between items-center"><span class="text-xs">ENGINE</span> <span class="font-bold bg-slate-800/50 px-2 py-1 rounded" style="color: var(--text-main);" id="val-engine-type">--</span></div>
@@ -399,7 +381,7 @@
         <!-- Anomaly Feed -->
         <div class="p-6 flex-grow overflow-y-auto">
             <h3 class="text-xs font-bold mb-4 tracking-widest uppercase flex items-center gap-2" style="color: var(--danger-color);">
-                <i data-lucide="alert-triangle" class="w-4 h-4 animate-pulse"></i> ANOMALIES
+                <i data-lucide="alert-triangle" class="w-4 h-4 animate-pulse"></i> FOCUS ANOMALIES
             </h3>
             <div id="anomalyList" class="space-y-3">
                 <div class="text-xs text-center mt-12 tracking-widest flex flex-col items-center gap-2" style="color: var(--text-muted);">
@@ -410,17 +392,11 @@
         </div>
     </aside>
 
-    <!-- Main Content -->
     <main class="flex-grow h-full overflow-y-auto relative flex flex-col" style="background-color: var(--bg-body);">
         
-        <!-- Top HUD Panel (Glassmorphism) -->
         <div class="sticky top-0 z-30 border-b glass-panel shadow-sm" style="border-color: var(--border-color);">
-            <!-- Max Cards Row -->
-            <div class="px-6 py-4 flex flex-nowrap overflow-x-auto gap-4 items-center md:justify-between no-scrollbar" id="max-cards-container">
-                <!-- Cards injected here -->
-            </div>
+            <div class="px-6 py-4 flex flex-nowrap overflow-x-auto gap-4 items-center md:justify-between no-scrollbar" id="max-cards-container"></div>
 
-            <!-- Current Value HUD -->
             <div class="px-6 py-2 border-t flex flex-col md:flex-row items-start md:items-center justify-between gap-2" style="border-color: var(--border-color); background: rgba(0,0,0,0.1);">
                 <div class="flex items-center gap-4">
                     <div class="font-mono font-bold text-xl flex items-center gap-2" id="hud-time" style="color: var(--accent-color);">
@@ -433,9 +409,7 @@
             </div>
         </div>
 
-        <!-- Charts Area -->
         <div class="p-6 md:p-8 space-y-8 pb-24">
-            
             <div id="empty-state" class="flex flex-col items-center justify-center h-[70vh] opacity-30">
                 <i data-lucide="line-chart" class="w-32 h-32 mb-6" style="color: var(--text-muted);"></i>
                 <h2 class="font-tech text-3xl tracking-widest" style="color: var(--text-muted);">READY FOR UPLOAD</h2>
@@ -443,7 +417,6 @@
             </div>
 
             <div id="charts-area" class="hidden">
-                <!-- Power -->
                 <div class="chart-container">
                     <div class="chart-header px-6 py-4 flex justify-between items-center">
                         <h2 class="font-tech tracking-widest text-2xl flex items-center gap-2" style="color: var(--text-main);">
@@ -454,7 +427,6 @@
                     <div id="chart-power" class="w-full h-72"></div>
                 </div>
 
-                <!-- Combustion -->
                 <div class="chart-container">
                     <div class="chart-header px-6 py-4 flex justify-between items-center">
                         <h2 class="font-tech tracking-widest text-2xl flex items-center gap-2" style="color: var(--text-main);">
@@ -465,7 +437,6 @@
                     <div id="chart-combustion" class="w-full h-96"></div>
                 </div>
 
-                <!-- Fluids -->
                 <div class="chart-container">
                     <div class="chart-header px-6 py-4 flex justify-between items-center">
                         <h2 class="font-tech tracking-widest text-2xl flex items-center gap-2" style="color: var(--text-main);">
@@ -479,32 +450,23 @@
         </div>
     </main>
 
-    <!-- Shared Micro Tooltip -->
     <div id="micro-tooltip" class="micro-tooltip"></div>
-
-    <!-- Main Chart Dynamic Tooltip -->
     <div id="chart-tooltip" class="chart-tooltip"></div>
 
 <script>
-/**
- * AVMAP EngiBox Analyzer v12.0 Dev Sandbox
- * - Standalone HTML Export Feature
- * - Lucide Icons Integration
- * - Glassmorphism UI & Slate Theme
- */
-
-// Initialize Lucide Icons initially
 lucide.createIcons();
 
 // Global State
-let flightData = [];
-let dateSegments = []; 
+let allSessions = [];          
+let currentSessionIndex = 0;   
+let flightData = [];           
 let globalXDomain = null;
 let currentZoomTransform = d3.zoomIdentity;
 let currentTheme = 'dark';
-window.rawCSVData = null; // Store for export
+let isOverlayMode = false;     // NEW: Track Overlay State
+window.rawCSVData = null;      
+window.currentMeta = null;     
 
-// Smart Palettes
 const PALETTE = {
     dark: {
         rpm: '#38bdf8', map: '#facc15', oilP: '#4ade80', oilT: '#fb923c',
@@ -521,7 +483,6 @@ const LIMITS = {
     oilP: { min: 0.8, max: 7.0 }, map: { max: 42 }, egt: { max: 900 } 
 };
 
-// Lucide Icons configuration for JS insertion
 const ICONS = {
     rpm: '<i data-lucide="gauge" class="w-6 h-6"></i>',
     map: '<i data-lucide="bar-chart-2" class="w-6 h-6"></i>',
@@ -531,7 +492,6 @@ const ICONS = {
     egt: '<i data-lucide="flame" class="w-6 h-6"></i>'
 };
 
-// --- Mobile Sidebar Logic ---
 const mobileMenuBtn = document.getElementById('mobileMenuBtn');
 const sidebar = document.getElementById('mainSidebar');
 const overlay = document.getElementById('sidebarOverlay');
@@ -541,11 +501,12 @@ function toggleMobileMenu() {
     overlay.classList.toggle('hidden');
 }
 
-// --- Theme Logic ---
 function switchTheme(themeName, btn) {
     document.body.setAttribute('data-theme', themeName);
     currentTheme = themeName;
-    document.querySelectorAll('.btn-theme').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.btn-theme').forEach(b => {
+        if(b.id !== 'btnModeStandard' && b.id !== 'btnModeOverlay') b.classList.remove('active')
+    });
     if(btn) btn.classList.add('active');
     
     if (flightData.length > 0) {
@@ -557,7 +518,22 @@ document.body.setAttribute('data-theme', 'dark');
 
 function getColors() { return currentTheme === 'light' ? PALETTE.light : PALETTE.dark; }
 
-// --- Data Loading & Export Logic ---
+// --- OVERLAY MODE LOGIC ---
+function setOverlayMode(isOverlay) {
+    isOverlayMode = isOverlay;
+    if(isOverlay) {
+        document.getElementById('btnModeStandard').classList.remove('active');
+        document.getElementById('btnModeOverlay').classList.add('active');
+    } else {
+        document.getElementById('btnModeOverlay').classList.remove('active');
+        document.getElementById('btnModeStandard').classList.add('active');
+    }
+    if(flightData.length > 0) {
+        currentZoomTransform = d3.zoomIdentity;
+        initCharts();
+    }
+}
+
 document.getElementById('csvInput').addEventListener('change', (e) => {
     if(e.target.files[0]) {
         const r = new FileReader();
@@ -569,7 +545,6 @@ document.getElementById('csvInput').addEventListener('change', (e) => {
     }
 });
 
-// Auto-load if this is an exported report
 window.addEventListener('DOMContentLoaded', () => {
     const embedded = document.getElementById('embedded-csv');
     if(embedded && embedded.textContent) {
@@ -579,53 +554,44 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// EXPORT TO HTML FUNCTION
 function exportToHTML() {
     if(!window.rawCSVData) return alert("Please load a CSV flight log first.");
-    
-    // Create a clone to manipulate safely without destroying current view
     const clone = document.documentElement.cloneNode(true);
-    
-    // Clean up dynamic D3 containers in clone to keep file small & clean for re-init
     clone.querySelector('#chart-power').innerHTML = '';
     clone.querySelector('#chart-combustion').innerHTML = '';
     clone.querySelector('#chart-fluid').innerHTML = '';
     clone.querySelector('#anomalyList').innerHTML = '';
     clone.querySelector('#max-cards-container').innerHTML = '';
-    
-    // Set exported flag
     clone.querySelector('body').classList.add('is-exported');
     
-    // Remove existing embedded script if any to prevent duplicates
     const existing = clone.querySelector('#embedded-csv');
     if(existing) existing.remove();
     
-    // Inject the raw CSV data
     const script = document.createElement('script');
     script.id = 'embedded-csv';
     script.type = 'text/plain';
     script.textContent = window.rawCSVData;
     clone.querySelector('body').appendChild(script);
     
-    // Convert to Blob and Download
     const htmlStr = "<!DOCTYPE html>\n" + clone.outerHTML;
     const blob = new Blob([htmlStr], {type: 'text/html;charset=utf-8'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     const dateStr = document.getElementById('val-date').textContent || 'Log';
-    a.download = `EngiBox_Report_${dateStr}.html`;
+    a.download = `EngiBox_Overlay_${dateStr}.html`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
 }
 
-// --- Parse CSV ---
 function processCSV(text) {
     try {
         const lines = text.split('\n').filter(l => l.trim() !== '');
         const meta = { engineType: 'Unknown', engineId: '--', lifetime: '--', date: '--' };
+        window.currentMeta = meta;
+        
         let headerIndex = -1;
         for(let i=0; i<Math.min(lines.length, 30); i++) {
             const row = lines[i];
@@ -647,12 +613,12 @@ function processCSV(text) {
             cols[key] = headers.findIndex(h => searchTerms.some(term => h.includes(term)));
         }
 
-        const data = [];
+        allSessions = [];
+        let currentSession = null;
+        let lastDt = null;
+        let lastDateStr = "";
         let lastTimeStr = "";
         let subSecondCounter = 0;
-        let lastDateStr = "";
-        let currentSegment = null;
-        dateSegments = [];
 
         for(let i = headerIndex + 1; i < lines.length; i++) {
             const row = lines[i].split(';');
@@ -660,15 +626,6 @@ function processCSV(text) {
             const dStr = row[cols['date']];
             const tStr = row[cols['time']];
             if(!dStr || !tStr) continue;
-
-            if(dStr !== lastDateStr) {
-                if(currentSegment) { 
-                    currentSegment.endIndex = data.length - 1;
-                    dateSegments.push(currentSegment);
-                }
-                currentSegment = { date: dStr, startIndex: data.length };
-                lastDateStr = dStr;
-            }
 
             if (tStr === lastTimeStr) subSecondCounter++;
             else { subSecondCounter = 0; lastTimeStr = tStr; }
@@ -685,35 +642,96 @@ function processCSV(text) {
                 dt = new Date(dParts[2], dParts[1]-1, dParts[0], tParts[0], tParts[1], tParts[2]||0, ms);
             }
 
+            let isNewSession = false;
+            if (!lastDt) {
+                isNewSession = true;
+            } else {
+                const timeDiffMs = dt.getTime() - lastDt.getTime();
+                if (timeDiffMs > 2000 || dStr !== lastDateStr) isNewSession = true;
+            }
+
+            if (isNewSession) {
+                currentSession = {
+                    id: allSessions.length + 1,
+                    dateStr: dStr,
+                    startTime: dt,
+                    endTime: dt,
+                    data: []
+                };
+                allSessions.push(currentSession);
+            }
+
             const pNum = (idx) => idx !== -1 && row[idx] ? parseFloat(row[idx].replace(',', '.').trim()) : null;
 
-            data.push({
-                fullTime: dt, dateStr: dStr,
+            // Calculate relative time in ms for overlay mode
+            const relTimeMs = dt.getTime() - currentSession.startTime.getTime();
+
+            const rowData = {
+                fullTime: dt, dateStr: dStr, relTimeMs: relTimeMs,
                 rpm: pNum(cols['rpm']), map: pNum(cols['map']),
                 oilT: pNum(cols['oil t']), oilP: pNum(cols['oil p']), ct: pNum(cols['ct']),
                 egt1: pNum(cols['egt 1']), egt2: pNum(cols['egt 2']), egt3: pNum(cols['egt 3']), egt4: pNum(cols['egt 4']),
-            });
+            };
+            
+            currentSession.data.push(rowData);
+            currentSession.endTime = dt; 
+            
+            lastDt = dt;
+            lastDateStr = dStr;
         }
-        if(currentSegment) { currentSegment.endIndex = data.length - 1; dateSegments.push(currentSegment); }
-        data.sort((a,b) => a.fullTime - b.fullTime);
-        flightData = data;
+        
+        if (allSessions.length === 0) throw new Error("No valid data rows found.");
+        
+        populateSessionDropdown();
+        loadSession(0);
 
-        updateMetaUI(meta, data);
-        renderMaxCards(data);
-        processAnomalies(data);
-        initCharts();
     } catch(e) {
         alert("Parse Error: " + e.message);
         console.error(e);
     }
 }
 
-// --- UI Logic ---
+function populateSessionDropdown() {
+    const select = document.getElementById('sessionSelect');
+    select.innerHTML = '';
+    
+    allSessions.forEach((sess, idx) => {
+        const startStr = sess.startTime.toLocaleTimeString('en-US', {hour12:false});
+        const endStr = sess.endTime.toLocaleTimeString('en-US', {hour12:false});
+        const durMins = ((sess.endTime - sess.startTime)/60000).toFixed(1);
+        
+        const opt = document.createElement('option');
+        opt.value = idx;
+        opt.textContent = `Mission ${sess.id} | ${sess.dateStr} | ${startStr} - ${endStr} [${durMins}m]`;
+        select.appendChild(opt);
+    });
+    
+    document.getElementById('session-container').classList.remove('hidden');
+}
+
+function handleSessionChange(e) {
+    const idx = parseInt(e.target.value);
+    loadSession(idx);
+}
+
+function loadSession(idx) {
+    currentSessionIndex = idx;
+    flightData = allSessions[idx].data;
+    
+    updateMetaUI(window.currentMeta, flightData);
+    renderMaxCards(flightData); // Only max cards for CURRENT session
+    processAnomalies(flightData); // Only anomalies for CURRENT session
+    
+    currentZoomTransform = d3.zoomIdentity;
+    initCharts();
+}
+
 function updateMetaUI(meta, data) {
     document.getElementById('empty-state').classList.add('hidden');
     document.getElementById('charts-area').classList.remove('hidden');
     document.getElementById('val-engine-type').textContent = meta.engineType || "ROTAX 912/914";
     document.getElementById('val-engine-id').textContent = meta.engineId;
+    
     if(data.length > 0) {
         const d = data[0].fullTime;
         const dateFormatted = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -749,7 +767,6 @@ function renderMaxCards(data) {
         const isAlert = maxVal > cfg.limit;
         const card = document.createElement('div');
         card.className = `max-card ${isAlert ? 'alert-active' : ''}`;
-        
         card.innerHTML = `
             <div class="max-card-icon" style="color: ${cfg.color}">${cfg.icon}</div>
             <div class="max-card-content">
@@ -757,20 +774,19 @@ function renderMaxCards(data) {
                 <div class="max-card-value">${maxVal}</div>
             </div>
         `;
-        card.onclick = () => focusOnTime(maxItem.fullTime);
+        card.onclick = () => focusOnTime(maxItem);
         container.appendChild(card);
     });
-    
-    // Re-initialize Lucide Icons for newly injected HTML
     lucide.createIcons();
 }
 
-function focusOnTime(targetDate) {
+// Focus handles relative time if needed
+function focusOnTime(targetDataObj) {
     if (!charts.length) return;
     const chart = charts[0];
     const width = chart.w; 
     const k = 10; 
-    const xPos = chart.x(targetDate);
+    const xPos = isOverlayMode ? chart.x(targetDataObj.relTimeMs) : chart.x(targetDataObj.fullTime);
     const tx = (width / 2) - (xPos * k);
     const transform = d3.zoomIdentity.translate(tx, 0).scale(k);
     charts.forEach(c => { c.svg.transition().duration(800).call(c.zoom.transform, transform); });
@@ -801,8 +817,8 @@ function processAnomalies(data) {
             else if(chk.op === '<' && val < chk.limit) triggered = true;
 
             if(triggered) {
-                if(!cur) cur = { name: chk.name, key: chk.key, start: d.fullTime, points: [] };
-                cur.points.push({t: d.fullTime, v: val});
+                if(!cur) cur = { name: chk.name, key: chk.key, start: d.fullTime, startMs: d.relTimeMs, points: [] };
+                cur.points.push({t: d.fullTime, ms: d.relTimeMs, v: val});
                 cur.end = d.fullTime;
             } else {
                 if(cur) { rawEvents.push(cur); cur = null; }
@@ -837,7 +853,7 @@ function processAnomalies(data) {
     } else {
         list.innerHTML = `<div class="text-center font-mono text-sm mt-10 p-4 border rounded-xl" style="color:var(--text-highlight); border-color:var(--border-color); background:rgba(0,0,0,0.2)">
             <i data-lucide="check-circle" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
-            ALL SYSTEMS NOMINAL
+            NO ANOMALIES IN FOCUS
         </div>`;
         lucide.createIcons();
     }
@@ -851,20 +867,28 @@ function renderAnomalyList(events) {
         const dur = (evt.end - evt.start)/1000;
         const maxV = d3.max(evt.points, p=>p.v);
         
+        let startStr = "";
+        if (isOverlayMode) {
+             const m = Math.floor(evt.startMs / 60000);
+             const s = Math.floor((evt.startMs % 60000) / 1000);
+             startStr = `+${m}m ${s.toString().padStart(2, '0')}s`;
+        } else {
+             startStr = evt.start.toLocaleTimeString('en-US', {hour12:false});
+        }
+        
         div.innerHTML = `
             <div class="flex justify-between text-base font-tech mb-2" style="color:var(--text-muted)">
                 <span class="font-bold tracking-wider" style="color:var(--danger-color)">${evt.name}</span>
                 <span>${maxV} <span class="text-[10px]">MAX</span></span>
             </div>
             <div class="flex justify-between text-[11px] font-mono" style="color:var(--text-label)">
-                <span>${evt.start.toLocaleTimeString('en-US', {hour12:false})}</span>
+                <span>${startStr}</span>
                 <span>${dur.toFixed(1)}s</span>
             </div>
         `;
         const w=240, h=40; 
         const svg = d3.select(div).append('svg').attr('viewBox',`0 0 ${w} ${h}`).attr('class','w-full h-10 mt-2');
         const x = d3.scaleTime().domain(d3.extent(evt.points, p=>p.t)).range([2, w-2]); 
-        
         const yMin = d3.min(evt.points, p=>p.v);
         const yMax = d3.max(evt.points, p=>p.v);
         const yPad = (yMax - yMin) * 0.2 || 1; 
@@ -876,33 +900,6 @@ function renderAnomalyList(events) {
         svg.append('path').datum(evt.points).attr('class', 'sparkline-area').attr('d', area);
         svg.append('path').datum(evt.points).attr('class', 'sparkline-path').attr('d', line);
         
-        // Micro Tooltip
-        svg.append("rect")
-            .attr("class", "micro-overlay")
-            .attr("width", w).attr("height", h).style("opacity", 0)
-            .on("mousemove", function(e) {
-                const [mx] = d3.pointer(e);
-                const dt = x.invert(mx);
-                const idx = d3.bisector(p => p.t).left(evt.points, dt);
-                const pt = evt.points[idx] || evt.points[evt.points.length-1];
-                if (pt) {
-                    const cx = x(pt.t);
-                    const cy = y(pt.v);
-                    dot.attr("cx", cx).attr("cy", cy).style("opacity", 1);
-                    const tt = document.getElementById('micro-tooltip');
-                    const timeStr = pt.t.toLocaleTimeString('en-US', { hour12: false });
-                    tt.innerHTML = `<div>${timeStr}</div><div style="font-weight:bold; color:var(--danger-color)">${pt.v}</div>`;
-                    tt.style.display = 'block';
-                    tt.style.left = (e.pageX + 10) + 'px';
-                    tt.style.top = (e.pageY - 40) + 'px';
-                }
-            })
-            .on("mouseleave", function() {
-                dot.style("opacity", 0);
-                document.getElementById('micro-tooltip').style.display = 'none';
-            });
-
-        const dot = svg.append("circle").attr("class", "micro-hover-dot").attr("r", 3);
         list.appendChild(div);
     });
 }
@@ -914,7 +911,17 @@ function initCharts() {
     d3.select("#chart-combustion").html("");
     d3.select("#chart-fluid").html("");
     const clr = getColors();
-    globalXDomain = d3.extent(flightData, d => d.fullTime);
+    
+    // Check mode to set domain
+    if (isOverlayMode) {
+        // Domain is [0, max duration ms of all sessions]
+        const maxMs = d3.max(allSessions, s => (s.endTime - s.startTime));
+        globalXDomain = [0, maxMs];
+    } else {
+        // Domain is actual Date objects
+        globalXDomain = d3.extent(flightData, d => d.fullTime);
+    }
+    
     const zoom = d3.zoom().scaleExtent([1, 50]).translateExtent([[0,0],[Infinity,Infinity]])
         .on("zoom", e => { currentZoomTransform = e.transform; updateAllCharts(); });
 
@@ -948,7 +955,10 @@ function createChart(id, series, zoom) {
 
     const g = svg.append("g").attr("transform", `translate(${m.l},${m.t})`);
     
-    const x = d3.scaleTime().domain(globalXDomain).range([0, w - m.l - m.r]);
+    // Choose scale based on mode
+    const x = isOverlayMode ? d3.scaleLinear().domain(globalXDomain).range([0, w - m.l - m.r])
+                            : d3.scaleTime().domain(globalXDomain).range([0, w - m.l - m.r]);
+                            
     const yL = d3.scaleLinear().range([h - m.t - m.b, 0]);
     const yR = d3.scaleLinear().range([h - m.t - m.b, 0]);
 
@@ -962,7 +972,6 @@ function createChart(id, series, zoom) {
     yL.domain(getDom(lData));
     yR.domain(getDom(rData));
 
-    // 同步空缺軸的網域，確保左右刻度一致對稱
     if (lData.length > 0 && rData.length === 0) yR.domain(yL.domain());
     if (rData.length > 0 && lData.length === 0) yL.domain(yR.domain());
 
@@ -973,9 +982,10 @@ function createChart(id, series, zoom) {
     const limitGroup = g.append("g").attr("clip-path", `url(#clip-${id.substring(1)})`);
     const lineGroup = g.append("g").attr("clip-path", `url(#clip-${id.substring(1)})`);
     
+    // Prepare parameter groups for multiple session lines
+    const paramGroups = {};
     series.forEach(s => {
-        lineGroup.append("path").attr("class", `line-${s.key}`).attr("fill", "none")
-            .attr("stroke", s.color).attr("stroke-width", 2); // Thicker lines for modern look
+        paramGroups[s.key] = lineGroup.append("g").attr("class", `group-${s.key}`);
     });
 
     const overlay = svg.append("rect").attr("class","overlay")
@@ -989,18 +999,17 @@ function createChart(id, series, zoom) {
     if(legEl) {
         legEl.innerHTML = '';
         series.forEach(s => {
-            s.hidden = false; // 初始化狀態標記
+            s.hidden = false;
             const d = document.createElement('div');
             d.className = "legend-item text-xs font-bold flex items-center gap-2";
             d.style.color = s.color;
             d.innerHTML = `<span style="width:10px;height:10px;background:${s.color};border-radius:3px"></span> ${s.label}`;
             d.onclick = () => {
-                s.hidden = !s.hidden; // 切換隱藏狀態
-                const path = lineGroup.select(`.line-${s.key}`);
-                const op = s.hidden ? 0 : 1;
-                path.transition().style("opacity", op);
-                d.style.opacity = op === 0 ? 0.4 : 1;
-                d.style.transform = op === 0 ? "scale(0.95)" : "scale(1)";
+                s.hidden = !s.hidden;
+                // Update visibility
+                updateAllCharts();
+                d.style.opacity = s.hidden ? 0.4 : 1;
+                d.style.transform = s.hidden ? "scale(0.95)" : "scale(1)";
             };
             legEl.appendChild(d);
         });
@@ -1010,7 +1019,7 @@ function createChart(id, series, zoom) {
     const dots = g.selectAll(".dot").data(series).enter().append("circle").attr("r",4).attr("fill", d=>d.color).style("opacity",0);
 
     charts.push({
-        id, svg, g, x, yL, yR, xG, yLG, yRG, lineGroup, bandGroup, limitGroup,
+        id, svg, g, x, yL, yR, xG, yLG, yRG, lineGroup, bandGroup, limitGroup, paramGroups,
         series, crosshair, dots, w: w-m.l-m.r, h: h-m.t-m.b, zoom
     });
 
@@ -1019,29 +1028,45 @@ function createChart(id, series, zoom) {
     function mousemove(e) {
         const [mx] = d3.pointer(e);
         const newX = currentZoomTransform.rescaleX(x);
-        const date = newX.invert(mx);
-        const idx = d3.bisector(d=>d.fullTime).left(flightData, date);
-        const d = flightData[idx];
+        const xVal = newX.invert(mx);
+        
+        let d;
+        // In Overlay mode, we still only snap to the "FOCUS SESSION" data for tooltips
+        if (isOverlayMode) {
+            const bisect = d3.bisector(item => item.relTimeMs).left;
+            const idx = bisect(flightData, xVal);
+            d = flightData[idx] || flightData[flightData.length - 1];
+        } else {
+            const bisect = d3.bisector(item => item.fullTime).left;
+            const idx = bisect(flightData, xVal);
+            d = flightData[idx] || flightData[flightData.length - 1];
+        }
+        
         if(d) {
             updateCrosshairs(d);
             updateHUD(d);
             
-            // 過濾出目前並未隱藏的參數
             const visibleSeries = series.filter(s => !s.hidden);
             
-            // 如果所有曲線都被隱藏了，就不顯示 Tooltip
             if (visibleSeries.length === 0) {
                 tooltip.style("display", "none");
                 return;
             }
 
-            // Build Tooltip Content
-            let timeStr = d.fullTime.toLocaleTimeString('en-US', {hour12:false});
+            let timeStr = "";
+            if (isOverlayMode) {
+                const totalSec = Math.floor(d.relTimeMs / 1000);
+                const mm = Math.floor(totalSec / 60);
+                const ss = totalSec % 60;
+                timeStr = `+${mm.toString().padStart(2, '0')}:${ss.toString().padStart(2, '0')} (M${currentSessionIndex+1})`;
+            } else {
+                timeStr = d.fullTime.toLocaleTimeString('en-US', {hour12:false});
+            }
+
             let html = `<div style="margin-bottom: 8px; font-size: 11px; color: var(--text-muted); border-bottom: 1px solid var(--border-color); padding-bottom: 6px; letter-spacing: 0.05em;">
                 TIME : ${timeStr}
             </div>`;
 
-            // 只針對可見的參數建立內容
             visibleSeries.forEach(s => {
                 let val = d[s.key];
                 let unitStr = "";
@@ -1051,15 +1076,12 @@ function createChart(id, series, zoom) {
                     else if (s.key === 'map') unitStr = "in/HG";
                     else if (s.key === 'oilP') unitStr = "bar";
                     else if (s.key === 'oilT' || s.key === 'ct') unitStr = "°C";
-                    // rpm remains "" (no unit)
                 } else {
                     val = "--";
                 }
 
-                // Add 2 spaces (&nbsp;&nbsp;) between value and unit if unit exists
                 let displayVal = val !== "--" ? `${val}${unitStr ? '&nbsp;&nbsp;' + unitStr : ''}` : val;
 
-                // Match exact color of the chart line
                 html += `
                 <div style="color: ${s.color}; margin: 4px 0; font-weight: bold; display: flex; justify-content: space-between; gap: 32px; align-items: center;">
                     <span>${s.label}</span>
@@ -1067,7 +1089,6 @@ function createChart(id, series, zoom) {
                 </div>`;
             });
 
-            // Display and position tooltip slightly offset from cursor
             tooltip.html(html)
                 .style("left", (e.pageX + 20) + "px")
                 .style("top", (e.pageY + 20) + "px")
@@ -1084,18 +1105,27 @@ function createChart(id, series, zoom) {
 function updateAllCharts() {
     charts.forEach(c => {
         const newX = currentZoomTransform.rescaleX(c.x);
-        c.xG.call(d3.axisBottom(newX).ticks(5).tickFormat(d3.timeFormat("%H:%M:%S")));
+        
+        c.xG.call(d3.axisBottom(newX).ticks(5).tickFormat(d => {
+            if (isOverlayMode) {
+                const totalSec = Math.floor(d / 1000);
+                const m = Math.floor(totalSec / 60);
+                const s = totalSec % 60;
+                return `+${m}:${s.toString().padStart(2, '0')}`;
+            } else {
+                return d3.timeFormat("%H:%M:%S")(d);
+            }
+        }));
+        
         c.yLG.call(d3.axisLeft(c.yL).ticks(5));
         c.yRG.call(d3.axisRight(c.yR).ticks(5));
         
-        // Axis Color Mapping
         const sLeft = c.series.find(s => s.axis === 'left');
         if (sLeft) c.yLG.selectAll("text").style("fill", sLeft.color);
         const sRight = c.series.find(s => s.axis === 'right');
         if (sRight) {
             c.yRG.selectAll("text").style("fill", sRight.color);
         } else if (sLeft) {
-            // 若右側無獨立參數，使其文字顏色與左側一致，保持視覺對稱
             c.yRG.selectAll("text").style("fill", sLeft.color);
         }
 
@@ -1103,38 +1133,50 @@ function updateAllCharts() {
         c.svg.selectAll(".axis line, .axis path").style("stroke", style.getPropertyValue('--border-color'));
         c.svg.selectAll(".grid-line").style("stroke", style.getPropertyValue('--grid-line'));
 
-        c.bandGroup.selectAll("*").remove();
-        dateSegments.forEach((seg, i) => {
-            if(i % 2 !== 0) {
-                const x1 = newX(flightData[seg.startIndex].fullTime);
-                const x2 = newX(flightData[seg.endIndex].fullTime);
-                if (x2 > 0 && x1 < c.w) {
-                    c.bandGroup.append("rect")
-                        .attr("x", x1).attr("y", 0).attr("width", Math.max(1, x2 - x1))
-                        .attr("height", c.h).attr("fill", "var(--grid-line)").attr("opacity", 0.15);
-                }
-            }
-        });
-
         c.limitGroup.selectAll("*").remove();
-        c.series.forEach(s => {
-            const lineGen = d3.line().curve(d3.curveMonotoneX)
-                .defined((d, i) => {
-                    if (i > 0 && flightData[i].dateStr !== flightData[i-1].dateStr) return false;
-                    return d[s.key] != null;
-                })
-                .x(d => newX(d.fullTime)).y(d => (s.axis==='left'?c.yL:c.yR)(d[s.key]));
-            c.lineGroup.select(`.line-${s.key}`).attr("d", lineGen(flightData)).attr("stroke", s.color);
+        
+        const displaySessions = isOverlayMode ? allSessions : [allSessions[currentSessionIndex]];
 
+        c.series.forEach(s => {
+            const group = c.paramGroups[s.key];
+            
+            if (s.hidden) {
+                group.selectAll("path.trace").remove();
+                return;
+            }
+
+            const paths = group.selectAll("path.trace").data(displaySessions, sess => sess.id);
+            
+            const lineGen = d3.line().curve(d3.curveMonotoneX)
+                .defined(d => d[s.key] != null)
+                .x(d => newX(isOverlayMode ? d.relTimeMs : d.fullTime))
+                .y(d => (s.axis==='left'?c.yL:c.yR)(d[s.key]));
+
+            paths.enter()
+                .append("path")
+                .attr("class", "trace")
+                .attr("fill", "none")
+                .merge(paths)
+                .attr("d", sess => lineGen(sess.data))
+                .attr("stroke", s.color)
+                // Highlight focused session, ghost others
+                .attr("stroke-width", sess => (!isOverlayMode || (sess.id - 1 === currentSessionIndex) ? 2 : 1.5))
+                .attr("opacity", sess => (!isOverlayMode || (sess.id - 1 === currentSessionIndex) ? 1 : 0.2))
+                .style("pointer-events", "none");
+
+            paths.exit().remove();
+
+            // Anomalies only for focused session to avoid clutter
             if(s.limit) {
                 const visibleData = flightData.filter(d => {
-                    const px = newX(d.fullTime);
+                    const px = newX(isOverlayMode ? d.relTimeMs : d.fullTime);
                     return px >= 0 && px <= c.w && d[s.key] > s.limit;
                 });
                 c.limitGroup.selectAll(`.anom-${s.key}`)
                     .data(visibleData).enter().append("rect")
-                    .attr("x", d => newX(d.fullTime)).attr("y", 0).attr("width", 2).attr("height", c.h)
-                    .attr("class", "anomaly-highlight");
+                    .attr("class", `anomaly-highlight anom-${s.key}`)
+                    .attr("x", d => newX(isOverlayMode ? d.relTimeMs : d.fullTime))
+                    .attr("y", 0).attr("width", 2).attr("height", c.h);
             }
         });
     });
@@ -1143,21 +1185,31 @@ function updateAllCharts() {
 function updateCrosshairs(d) {
     charts.forEach(c => {
         const newX = currentZoomTransform.rescaleX(c.x);
-        const xp = newX(d.fullTime);
+        const xp = isOverlayMode ? newX(d.relTimeMs) : newX(d.fullTime);
         if(xp < 0 || xp > c.w) return;
         c.crosshair.attr("transform", `translate(${xp},0)`).style("opacity", 1);
-        c.dots.attr("cx", xp).attr("cy", s => (s.axis==='left'?c.yL:c.yR)(d[s.key])).style("opacity", 1);
+        
+        // Only draw dots for visible series
+        c.dots.attr("cx", xp).attr("cy", s => (s.axis==='left'?c.yL:c.yR)(d[s.key]))
+              .style("opacity", s => s.hidden ? 0 : 1);
     });
 }
 
 function updateHUD(d) {
-    const dateFormatted = d.fullTime.getFullYear() + '-' + 
-                          String(d.fullTime.getMonth() + 1).padStart(2, '0') + '-' + 
-                          String(d.fullTime.getDate()).padStart(2, '0');
-    const timeS = d.fullTime.toLocaleTimeString('en-US', {hour12:false});
+    let timeStr = "";
+    if (isOverlayMode) {
+        const totalSec = Math.floor(d.relTimeMs / 1000);
+        const mm = Math.floor(totalSec / 60);
+        const ss = totalSec % 60;
+        timeStr = `+${mm.toString().padStart(2, '0')}:${ss.toString().padStart(2, '0')}`;
+    } else {
+        const dateFormatted = d.fullTime.getFullYear() + '-' + 
+                              String(d.fullTime.getMonth() + 1).padStart(2, '0') + '-' + 
+                              String(d.fullTime.getDate()).padStart(2, '0');
+        timeStr = `${dateFormatted} ${d.fullTime.toLocaleTimeString('en-US', {hour12:false})}`;
+    }
     
-    // Update time with icon keeping intact
-    document.getElementById('hud-time').innerHTML = `<i data-lucide="clock" class="w-4 h-4"></i> ${dateFormatted} ${timeS}`;
+    document.getElementById('hud-time').innerHTML = `<i data-lucide="clock" class="w-4 h-4"></i> ${timeStr}`;
     
     const clr = getColors();
     const val = (v, c) => `<span style="color:${c}" class="font-bold text-2xl">${v!=null?v:'--'}</span>`;
@@ -1179,11 +1231,7 @@ function updateHUD(d) {
         <span style="color:${clr.egt4}" class="text-xl font-bold bg-slate-800/30 px-2 rounded">${d.egt4}</span>
     `;
     
-    // Quick re-init for newly added clock icon in HUD
-    lucide.createIcons({
-        nameAttr: 'data-lucide',
-        attrs: { class: 'w-4 h-4' }
-    });
+    lucide.createIcons({ nameAttr: 'data-lucide', attrs: { class: 'w-4 h-4' } });
 }
 
 window.addEventListener('resize', () => { if(flightData.length) initCharts(); });
